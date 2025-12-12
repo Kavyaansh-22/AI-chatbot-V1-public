@@ -1,42 +1,193 @@
 (function() {
     // Configuration
-    const API_URL = "http://127.0.0.1:8000/chat"; // Change to your Render URL later
+    // Ensure this URL is correct for local testing or deployment
+    const API_URL = "http://127.0.0.1:8000/chat"; 
     
-    // Inject CSS
+    // Inject CSS - Dark Theme, Sleek, Gemini-Inspired
     const style = document.createElement('style');
     style.innerHTML = `
-        #roadies-chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 9999; font-family: 'Segoe UI', sans-serif; }
-        #roadies-chat-btn { width: 60px; height: 60px; background: #e74c3c; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; transition: transform 0.2s; }
-        #roadies-chat-btn:hover { transform: scale(1.1); }
+        /* General Widget Container */
+        #roadies-chat-widget { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            z-index: 9999; 
+            font-family: 'Inter', sans-serif; /* Modern Font */
+        }
         
-        #roadies-chat-window { width: 350px; height: 500px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; position: absolute; bottom: 80px; right: 0; }
-        .chat-header { background: #333; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        /* Chat Button (Floating Bubble) */
+        #roadies-chat-btn { 
+            width: 55px; 
+            height: 55px; 
+            background: #13f7cf; /* Bright Gemini Accent */
+            border-radius: 50%; 
+            box-shadow: 0 4px 15px rgba(19, 247, 207, 0.4); /* Glowing effect */
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #0d0d0d; 
+            font-size: 24px; 
+            transition: transform 0.3s ease-in-out; 
+            font-weight: bold;
+        }
+        #roadies-chat-btn:hover { 
+            transform: scale(1.05); 
+            box-shadow: 0 4px 20px rgba(19, 247, 207, 0.7);
+        }
+        
+        /* Chat Window */
+        #roadies-chat-window { 
+            width: 360px; 
+            height: 550px; 
+            background: #1e1e1e; /* Dark background */
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            display: none; 
+            flex-direction: column; 
+            overflow: hidden; 
+            position: absolute; 
+            bottom: 75px; 
+            right: 0; 
+            border: 1px solid #282828;
+        }
+        
+        /* Chat Header */
+        .chat-header { 
+            background: #0d0d0d; 
+            color: #ffffff; 
+            padding: 15px 20px; 
+            font-weight: 600; 
+            font-size: 16px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid #282828;
+        }
         .chat-header span { font-size: 18px; }
-        .chat-close { cursor: pointer; font-size: 20px; }
+        .chat-close { cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+        .chat-close:hover { opacity: 1; }
         
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; }
+        /* Messages Area */
+        .chat-messages { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            background: #1e1e1e; 
+        }
+        /* Scrollbar styling for dark theme (Webkit) */
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+        .chat-messages::-webkit-scrollbar-thumb:hover { background: #555; }
+
         .message { margin-bottom: 15px; display: flex; flex-direction: column; }
-        .msg-bubble { padding: 10px 15px; border-radius: 15px; max-width: 85%; font-size: 14px; line-height: 1.4; }
-        .user-msg { align-self: flex-end; background: #e74c3c; color: white; border-bottom-right-radius: 2px; }
-        .bot-msg { align-self: flex-start; background: #e0e0e0; color: #333; border-bottom-left-radius: 2px; }
+        .msg-bubble { 
+            padding: 12px 18px; 
+            border-radius: 18px; 
+            max-width: 80%; 
+            font-size: 14px; 
+            line-height: 1.5; 
+        }
+        .user-msg { 
+            align-self: flex-end; 
+            background: #333333; 
+            color: white; 
+            border-bottom-right-radius: 4px; /* Sleek corner break */
+        }
+        .bot-msg { 
+            align-self: flex-start; 
+            background: #13f7cf; /* Accent color for bot */
+            color: #0d0d0d; 
+            font-weight: 500;
+            border-bottom-left-radius: 4px; /* Sleek corner break */
+        }
         
-        .product-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-top: 10px; display: flex; gap: 10px; align-items: center; }
-        .product-card img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
-        .product-info { display: flex; flex-direction: column; }
-        .product-name { font-weight: bold; font-size: 13px; color: #333; }
-        .product-price { color: #e74c3c; font-weight: bold; font-size: 12px; margin: 2px 0; }
-        .product-link { font-size: 11px; color: #007bff; text-decoration: none; }
-        
-        .chat-input-area { padding: 10px; border-top: 1px solid #ddd; display: flex; background: white; }
-        #chat-input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 20px; outline: none; }
-        #chat-send { background: #333; color: white; border: none; padding: 8px 15px; margin-left: 10px; border-radius: 20px; cursor: pointer; }
+        /* Product Cards */
+        .product-card { 
+            background: #2a2a2a; /* Card background */
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-top: 10px; 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+            transition: background 0.2s;
+        }
+        .product-card:hover {
+            background: #333333;
+        }
+        .product-card img { 
+            width: 60px; 
+            height: 60px; 
+            object-fit: cover; 
+            border-radius: 6px; 
+            border: 1px solid #13f7cf; /* Accent frame */
+        }
+        .product-info { display: flex; flex-direction: column; flex-grow: 1; }
+        .product-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+        .product-price { color: #13f7cf; font-weight: bold; font-size: 13px; margin: 2px 0; }
+        .product-link { 
+            font-size: 12px; 
+            color: #13f7cf; 
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .product-link:hover { color: #ffffff; }
+
+        /* Input Area */
+        .chat-input-area { 
+            padding: 12px; 
+            border-top: 1px solid #282828; 
+            display: flex; 
+            background: #0d0d0d; 
+        }
+        #chat-input { 
+            flex: 1; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 25px; 
+            outline: none; 
+            background: #333333; /* Input background */
+            color: white;
+            font-size: 14px;
+            transition: box-shadow 0.2s;
+        }
+        #chat-input::placeholder {
+            color: #888;
+        }
+        #chat-input:focus {
+            box-shadow: 0 0 0 2px #13f7cf; /* Accent focus ring */
+        }
+        #chat-send { 
+            background: #13f7cf; 
+            color: #0d0d0d; 
+            border: none; 
+            padding: 8px 18px; 
+            margin-left: 10px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        #chat-send:hover {
+            opacity: 0.85;
+        }
         
         /* Loading dots */
-        .typing { font-style: italic; color: #888; font-size: 12px; margin-left: 5px; display:none;}
+        .typing { 
+            font-style: italic; 
+            color: #13f7cf; 
+            font-size: 12px; 
+            margin-left: 15px; 
+            margin-top: 5px;
+            display:none;
+        }
     `;
     document.head.appendChild(style);
 
-    // Create Widget DOM
+    // Create Widget DOM (No changes here, remains the same structure)
     const widgetContainer = document.createElement('div');
     widgetContainer.id = 'roadies-chat-widget';
     widgetContainer.innerHTML = `
@@ -47,20 +198,20 @@
             </div>
             <div class="chat-messages" id="chat-messages">
                 <div class="message">
-                    <div class="msg-bubble bot-msg">Hi! I'm your Roadies expert. Looking for a helmet, jacket, or gloves today?</div>
+                    <div class="msg-bubble bot-msg">Hi! I'm your Roadies expert. Looking for a high-safety helmet, jacket, or gloves today?</div>
                 </div>
             </div>
             <div class="typing" id="typing-indicator">Roadies is typing...</div>
             <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Type a message..." />
+                <input type="text" id="chat-input" placeholder="Ask me about gear, price, or policy..." />
                 <button id="chat-send">Send</button>
             </div>
         </div>
-        <div id="roadies-chat-btn">💬</div>
+        <div id="roadies-chat-btn">🤖</div>
     `;
     document.body.appendChild(widgetContainer);
 
-    // Event Listeners
+    // Event Listeners (Logic remains the same)
     const chatBtn = document.getElementById('roadies-chat-btn');
     const chatWindow = document.getElementById('roadies-chat-window');
     const closeBtn = document.querySelector('.chat-close');
